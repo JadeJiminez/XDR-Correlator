@@ -1,0 +1,8 @@
+The quick brown fox jumps over the lazy dog. This is a sample plain-text
+file used to test Shannon entropy scoring. Ordinary English prose has a
+fairly predictable letter distribution, so its entropy per byte sits
+noticeably below random or compressed data -- typically in the 4 to 5
+bits-per-byte range, since common letters like 'e' and spaces recur far
+more often than rare characters like 'q' or 'z'. Repetition and predictable
+structure are exactly what keep entropy low, which is why plain text is
+easy to compress and easy to distinguish from packed or encrypted payloads.

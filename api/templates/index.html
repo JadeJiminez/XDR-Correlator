@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>XDR Live Threat Stream</title>
+    <style>
+        body { background: #0f172a; color: #e2e8f0; font-family: monospace; padding: 20px; }
+        #feed { border: 1px solid #334155; height: 75vh; overflow-y: scroll; padding: 15px; background: #020617; border-radius: 6px; }
+        .alert { padding: 10px; margin-bottom: 8px; border-left: 5px solid; border-radius: 4px; background: #1e293b; animation: fadeIn 0.3s; }
+        .sev-1 { border-color: #38bdf8; }
+        .sev-2 { border-color: #4ade80; }
+        .sev-3 { border-color: #fbbf24; }
+        .sev-4 { border-color: #fb923c; }
+        .sev-5 { border-color: #ef4444; background: #451a1a; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+    <h2>[XDR ENGINE] Live Security Incident &amp; Correlation Stream</h2>
+    <div id="status">Connecting to engine core ...</div>
+    <br>
+    <div id="feed"></div>
+    <script>
+        const feed = document.getElementById('feed');
+        const status = document.getElementById('status');
+        const ws = new WebSocket(`ws://${window.location.host}/ws`);
+
+        ws.onopen = () => { status.innerText = "CONNECTED TO ENGINE"; status.style.color = "#4ade80"; };
+        ws.onclose = () => { status.innerText = "DISCONNECTED FROM ENGINE"; status.style.color = "#ef4444"; };
+
+        ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            const entry = document.createElement('div');
+
+            const isIncident = data.incident_type === "correlated_apt_kill_chain";
+            const severity = isIncident ? 5 : (data.severity || 1);
+
+            entry.className = `alert sev-${severity}`;
+
+            if (isIncident) {
+                entry.innerHTML = `<strong>[!!!] APT KILL-CHAIN ESCALATION [!!!]</strong><br>
+                                   Source Attacker IP: ${data.source_ip}<br>
+                                   Risk Score: ${data.summary.calculated_risk_score}% | Events Linked: ${data.summary.total_events_involved}<br>
+                                   Timeline Context: ${data.timeline.map(t => t.event_type).join(' &#10132; ')}`;
+            } else {
+                entry.innerHTML = `<strong>[EVENT] Vector: ${data.vector} | Type: ${data.event_type}</strong><br>
+                                   Source: ${data.src} | UUID: ${data.uuid} | Time: ${new Date(data.timestamp * 1000).toLocaleTimeString()}`;
+            }
+
+            feed.insertBefore(entry, feed.firstChild);
+            if (feed.children.length > 100) { feed.removeChild(feed.lastChild); }
+        };
+    </script>
+</body>
+</html>
